@@ -19,15 +19,28 @@ const DiscoverScreen = () => {
     return id ? parseInt(id) : null;
   };
 
+   // Separate function to fetch game locations
+   const loadGameLocations = async (userId) => {
+    try {
+      const gameLocations = await fetchDiscoverableGameLocationsForUser(userId);
+      console.log("Fetched Game Locations:", gameLocations);
+      setItems(Array.isArray(gameLocations) ? gameLocations : []);
+    } catch (error) {
+      console.error('Error fetching game locations:', error.message);
+      setItems([]); // Set items to an empty array in case of error
+    }
+  };
+
   const handleSliderChange = async (value) => {
     setSliderValue(value);
     setUserSearchRadius(value * 1000); // Convert km to meters for the map
-  
+
     const userId = await getUserIdFromStorage();
     if (userId) {
       try {
         await updateUserSearchRadius(userId, value);
         console.log("User search radius updated to:", value);
+        await loadGameLocations(userId); // Re-fetch game locations with new radius
       } catch (error) {
         console.error('Error updating user search radius:', error);
       }
@@ -38,7 +51,6 @@ const DiscoverScreen = () => {
   useEffect(() => {
     (async () => {
       const userIdFromStorage = await getUserIdFromStorage();
-
       if (!userIdFromStorage) {
         console.error("User ID not found in storage.");
         return;
@@ -81,6 +93,8 @@ const DiscoverScreen = () => {
       } catch (error) {
         console.error('Error fetching user data:', error.message);
       }
+      await loadGameLocations(userIdFromStorage); // Fetch game locations initially
+
     })();
 
     Animated.loop(

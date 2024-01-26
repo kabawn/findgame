@@ -8,7 +8,7 @@ const EditorDashboard = ({ navigation }) => {
             {/* Add other UI components and functionality specific to the editor dashboard here */}
             <Button 
                 title="Go Back to Login"
-                onPress={() => navigation.navigate('Login')}
+                onPress={() => navigation.navigate('AddLocationForm')}
             />
         </View>
     );

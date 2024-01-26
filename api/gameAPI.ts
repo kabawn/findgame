@@ -115,3 +115,26 @@ export const updateUserSearchRadius = async (userId, newRadius) => {
 };
 
 
+export const addGameLocation = async (locationData) => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${BASE_URL}/game-locations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(locationData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error adding game location:", error);
+    throw error;
+  }
+};

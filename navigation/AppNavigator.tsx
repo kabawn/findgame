@@ -6,6 +6,7 @@ import ItemDetailsScreen from '../screens/ItemDetailsScreen';
 import Signup from '../screens/Signup';  // Import the Signup screen
 import Login from '../screens/Login';    // Import the Login screen
 import EditorDashboard from '../screens/Editor/EditorDashboard'; // Update with correct path
+import AddLocationForm from '../screens/Editor/AddLocationForm'; // Update with correct path
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,8 @@ const AppNavigator: React.FC = () => {
             <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Discover Items' }} />
             <Stack.Screen name="ItemDetails" component={ItemDetailsScreen} options={{ title: 'Item Details' }} />
             <Stack.Screen name="EditorDashboard" component={EditorDashboard} />
+            <Stack.Screen name="AddLocationForm" component={AddLocationForm} />
+
 
         </Stack.Navigator>
     );
