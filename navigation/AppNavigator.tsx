@@ -5,8 +5,9 @@ import DiscoverScreen from '../screens/DiscoverScreen';
 import ItemDetailsScreen from '../screens/ItemDetailsScreen';
 import Signup from '../screens/Signup';  // Import the Signup screen
 import Login from '../screens/Login';    // Import the Login screen
-import EditorDashboard from '../screens/Editor/EditorDashboard'; // Update with correct path
 import AddLocationForm from '../screens/Editor/AddLocationForm'; // Update with correct path
+import BottomTabNavigator from '..//screens/BottomTabNavigator'; // Import BottomTabNavigator
+import LocationDetailsScreen from '../screens/Editor/LocationDetailsScreen'; // Update with correct path
 
 const Stack = createStackNavigator();
 
@@ -18,8 +19,9 @@ const AppNavigator: React.FC = () => {
             <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Find Game' }} />
             <Stack.Screen name="Discover" component={DiscoverScreen} options={{ title: 'Discover Items' }} />
             <Stack.Screen name="ItemDetails" component={ItemDetailsScreen} options={{ title: 'Item Details' }} />
-            <Stack.Screen name="EditorDashboard" component={EditorDashboard} />
             <Stack.Screen name="AddLocationForm" component={AddLocationForm} />
+            <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="LocationDetails" component={LocationDetailsScreen} options={{ title: 'Location Details' }} />
 
 
         </Stack.Navigator>

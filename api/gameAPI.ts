@@ -115,16 +115,31 @@ export const updateUserSearchRadius = async (userId, newRadius) => {
 };
 
 
-export const addGameLocation = async (locationData) => {
+export const addGameLocation = async (locationData, imageUri) => {
+  const token = await getToken();
+  
+  const formData = new FormData();
+  formData.append('gameLocation', JSON.stringify(locationData), { type: 'application/json' }); // Append game location data with the correct content type
+
+  if (imageUri) {
+    const uriParts = imageUri.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+
+    formData.append('file', {
+      uri: imageUri,
+      name: `photo.${fileType}`, // or another filename
+      type: `image/${fileType}`, // or another file type
+    });
+  }
+
   try {
-    const token = await getToken();
     const response = await fetch(`${BASE_URL}/game-locations`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
+        // Do not set 'Content-Type' manually; let FormData set it
       },
-      body: JSON.stringify(locationData)
+      body: formData,
     });
 
     if (!response.ok) {
@@ -138,3 +153,22 @@ export const addGameLocation = async (locationData) => {
     throw error;
   }
 };
+
+export const fetchGameLocationsByEditor = async () => {
+  try {
+    const editorId = await AsyncStorage.getItem('userId'); // Assuming 'userId' is stored in AsyncStorage
+    const response = await fetch(`${BASE_URL}/game-locations/editor/${editorId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching game locations by editor:", error);
+    throw error;
+  }
+};
+
+
+
+

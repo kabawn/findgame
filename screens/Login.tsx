@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
         if (data.role === 'user') {
           navigation.navigate('Home');
         } else if (data.role === 'editor') {
-          navigation.navigate('EditorDashboard'); // Navigate to the Editor Dashboard
+          navigation.navigate('Main', { screen: 'Dashboard' });
         } else {
           alert('Access denied. Unauthorized role.');
         }

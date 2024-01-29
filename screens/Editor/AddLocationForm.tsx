@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { ScrollView, TextInput, Button, StyleSheet, Alert, Image, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addGameLocation } from '..//..//api/gameAPI';
+import * as ImagePicker from 'expo-image-picker';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const AddLocationForm = () => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         websiteUrl: '',
-        imageUrl: '',
         promoInfo: '',
         latitude: '',
         longitude: '',
         visibilityRadius: '',
         editorId: '',
     });
+    const [image, setImage] = useState(null);
 
     useEffect(() => {
         const getEditorId = async () => {
-            const editorId = await AsyncStorage.getItem('userId'); // Assuming the editor's ID is stored with the key 'userId'
+            const editorId = await AsyncStorage.getItem('userId');
             if (editorId) {
                 setFormData(prevFormData => ({
                     ...prevFormData,
@@ -33,63 +35,110 @@ const AddLocationForm = () => {
         setFormData(prevState => ({ ...prevState, [name]: value }));
     };
 
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+    
+        if (!result.canceled) { // Updated from 'cancelled' to 'canceled'
+            const selectedImageUri = result.assets[0].uri;
+            setImage(selectedImageUri);
+        }
+    };
+    
+    
+
     const handleSubmit = async () => {
         try {
-            // Add logic to validate form data
-            // ...
-    
-            // Call the function to add a new game location
-            await addGameLocation(formData);
+            await addGameLocation(formData, image);
             Alert.alert("Success", "Location added successfully.");
-    
-            // Optionally reset form
             setFormData({
                 name: '',
                 description: '',
                 websiteUrl: '',
-                imageUrl: '',
                 promoInfo: '',
                 latitude: '',
                 longitude: '',
                 visibilityRadius: '',
                 editorId: ''
             });
+            setImage(null);
         } catch (error) {
             console.error("Error adding location:", error);
             Alert.alert("Error", "Failed to add location.");
         }
     };
 
+
+    const renderInputField = (name, placeholder, iconName) => {
+        return (
+            <View style={styles.inputContainer}>
+                <MaterialIcons name={iconName} size={24} color="black" />
+                <TextInput
+                    style={styles.input}
+                    placeholder={placeholder}
+                    onChangeText={text => handleChange(name, text)}
+                    value={formData[name]}
+                />
+            </View>
+        );
+    };
+
     return (
-        <View style={styles.container}>
-            {/* Form fields */}
-            <TextInput style={styles.input} placeholder="Name" onChangeText={text => handleChange('name', text)} value={formData.name} />
-            <TextInput style={styles.input} placeholder="Description" onChangeText={text => handleChange('description', text)} value={formData.description} />
-            <TextInput style={styles.input} placeholder="Website URL" onChangeText={text => handleChange('websiteUrl', text)} value={formData.websiteUrl} />
-            <TextInput style={styles.input} placeholder="Image URL" onChangeText={text => handleChange('imageUrl', text)} value={formData.imageUrl} />
-            <TextInput style={styles.input} placeholder="Promo Info" onChangeText={text => handleChange('promoInfo', text)} value={formData.promoInfo} />
-            <TextInput style={styles.input} placeholder="Latitude" onChangeText={text => handleChange('latitude', text)} value={formData.latitude} />
-            <TextInput style={styles.input} placeholder="Longitude" onChangeText={text => handleChange('longitude', text)} value={formData.longitude} />
-            <TextInput style={styles.input} placeholder="Visibility Radius" onChangeText={text => handleChange('visibilityRadius', text)} value={formData.visibilityRadius} />
+        <ScrollView style={styles.container}>
+            {/* Input Fields */}
+            {renderInputField('name', 'Name', 'place')}
+            {renderInputField('description', 'Description', 'description')}
+            {renderInputField('websiteUrl', 'Website URL', 'public')}
+            {renderInputField('promoInfo', 'Promo Info', 'local-offer')}
+            {renderInputField('latitude', 'Latitude', 'explore')}
+            {renderInputField('longitude', 'Longitude', 'explore')}
+            {renderInputField('visibilityRadius', 'Visibility Radius', 'visibility')}
+
+            {/* Image Picker */}
+            <View style={styles.buttonContainer}>
+                <Button title="Pick an image" onPress={pickImage} />
+            </View>
+            {image && <Image source={{ uri: image }} style={styles.image} />}
 
             {/* Submit Button */}
-            <Button title="Add Location" onPress={handleSubmit} />
-        </View>
+            <View style={styles.buttonContainer}>
+                <Button title="Add Location" onPress={handleSubmit} />
+            </View>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
         padding: 20,
     },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: 'gray',
+        marginBottom: 15,
+        paddingVertical: 5,
+    },
     input: {
+        flex: 1,
+        marginLeft: 10,
         height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
+    },
+    image: {
+        width: 200,
+        height: 200,
         marginBottom: 10,
-        padding: 10,
+        alignSelf: 'center',
+    },
+    buttonContainer: {
+        marginBottom: 20,
+        marginTop: 10,
     },
 });
 
