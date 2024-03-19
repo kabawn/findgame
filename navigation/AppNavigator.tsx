@@ -8,7 +8,9 @@ import Login from '../screens/Login';    // Import the Login screen
 import AddLocationForm from '../screens/Editor/AddLocationForm'; // Update with correct path
 import BottomTabNavigator from '..//screens/BottomTabNavigator'; // Import BottomTabNavigator
 import LocationDetailsScreen from '../screens/Editor/LocationDetailsScreen'; // Update with correct path
-
+import AddBaliseScreen from '../screens/Editor/AddBaliseScreen';
+import AddCategoryForm from '../screens/Editor/AddCategoryForm';
+import AddContentForm from '../screens/Editor/AddContentForm';
 const Stack = createStackNavigator();
 
 const AppNavigator: React.FC = () => {
@@ -22,6 +24,10 @@ const AppNavigator: React.FC = () => {
             <Stack.Screen name="AddLocationForm" component={AddLocationForm} />
             <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="LocationDetails" component={LocationDetailsScreen} options={{ title: 'Location Details' }} />
+            <Stack.Screen name="AddBaliseScreen" component={AddBaliseScreen}  />
+            <Stack.Screen name="AddCategoryForm" component={AddCategoryForm} />
+            <Stack.Screen name="AddContentForm" component={AddContentForm} />
+
 
 
         </Stack.Navigator>
