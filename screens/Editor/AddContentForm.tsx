@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, Alert, Text, ScrollView, Image } from "react-native";
+import {
+   View,
+   TextInput,
+   Button,
+   StyleSheet,
+   Alert,
+   Text,
+   ScrollView,
+   Image,
+   TouchableOpacity,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
@@ -48,38 +58,43 @@ const AddContentForm = () => {
       }
    };
 
+   // Image upload function
    const uploadImage = async (imageUri) => {
-      let formData = new FormData();
-      formData.append("file", {
-         uri: imageUri,
-         type: "image/jpeg",
-         name: "image.jpg",
-      });
+    let formData = new FormData();
+    formData.append("file", {
+        uri: imageUri,
+        type: "image/jpeg", // Adjust based on actual image type
+        name: "upload.jpg", // The name can be dynamically set if needed
+    });
 
-      try {
-         const response = await fetch(`${BASE_URL}/api/upload`, {
+    try {
+        const response = await fetch(`${BASE_URL}/api/upload`, {
             method: "POST",
             body: formData,
             headers: {
-               "Content-Type": "multipart/form-data",
+                "Content-Type": "multipart/form-data",
             },
-         });
+        });
 
-         if (!response.ok) {
-            throw new Error("Failed to upload image");
-         }
+        if (!response.ok) throw new Error("Failed to upload image");
 
-         const responseText = await response.text();
-         const imageUrl = `${BASE_URL}/${responseText.trim()}`;
-         setFormData((prevState) => ({
+        // Directly use the response URL as it already includes the base URL
+        const imageUrl = await response.text();
+
+        // Update formData with the received image URL
+        setFormData(prevState => ({
             ...prevState,
-            imageUrl: imageUrl, // Update this line
-         }));
-      } catch (error) {
-         console.error("Error uploading image:", error);
-         Alert.alert("Error", "Failed to upload image.");
-      }
-   };
+            imageUrl: imageUrl.trim() // Ensuring no leading/trailing whitespace
+        }));
+
+        return imageUrl; // This return might be used or ignored depending on subsequent logic
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        Alert.alert("Error", "Failed to upload image.");
+        return null; // Indicating failure
+    }
+};
+
 
    const fetchCategories = async () => {
       try {
@@ -122,21 +137,33 @@ const AddContentForm = () => {
       return category ? category.name : "";
    };
 
-   const handleSubmit = async () => {
-    if (!imageUri) {
-        Alert.alert("Error", "Please pick an image before submitting.");
+  // Submit content function
+const handleSubmit = async () => {
+    if (!formData.title || !formData.body || !formData.categoryId || !formData.baliseId) {
+        Alert.alert("Validation Error", "Please fill in all fields.");
         return;
     }
 
-    await uploadImage(imageUri); // This sets the imageUrl in formData
+    if (!imageUri) {
+        Alert.alert("Validation Error", "Please pick an image.");
+        return;
+    }
+
+    // Upload image and get the URL
+    const imageUrl = await uploadImage(imageUri);
+    if (!imageUrl) {
+        Alert.alert("Upload Error", "Failed to upload image.");
+        return;
+    }
+
+    // Prepare submission data including the imageUrl
+    const submissionData = {
+        ...formData,
+        userId: userId,
+        imageUrl: imageUrl, // Include the image URL received from the upload function
+    };
 
     try {
-        const submissionData = {
-            ...formData,
-            userId: userId, // Assuming your backend expects a string
-        };
-
-        // No need to change anything here if formData already includes imageUrl correctly
         const response = await fetch(`${BASE_URL}/api/contents`, {
             method: "POST",
             headers: {
@@ -145,13 +172,18 @@ const AddContentForm = () => {
             body: JSON.stringify(submissionData),
         });
 
-        // Handling response and errors remains the same
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to submit content: ${errorData}`);
+        }
+
+        Alert.alert("Success", "Content added successfully!");
+        // Reset form fields here
     } catch (error) {
         console.error("Error submitting content:", error);
         Alert.alert("Error", "Failed to submit content.");
     }
 };
-
 
    return (
       <ScrollView style={styles.container}>
@@ -168,7 +200,6 @@ const AddContentForm = () => {
                />
             ))}
          </Picker>
-
          {/* Balise Picker */}
          <Text>Balise:</Text>
          <Picker
@@ -183,7 +214,6 @@ const AddContentForm = () => {
                />
             ))}
          </Picker>
-
          {/* Skills Form */}
          {getCategoryNameById(formData.categoryId) === "Skills" && (
             <>
@@ -237,7 +267,6 @@ const AddContentForm = () => {
                )}
             </>
          )}
-
          {/* Services Form */}
          {getCategoryNameById(formData.categoryId) === "Services" && (
             <>
@@ -255,8 +284,9 @@ const AddContentForm = () => {
                />
             </>
          )}
-
-         <Button title="Submit Content" onPress={handleSubmit} />
+         <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+            <Text style={styles.submitButtonText}>Submit Content</Text>
+         </TouchableOpacity>
       </ScrollView>
    );
 };
@@ -268,9 +298,23 @@ const styles = StyleSheet.create({
    },
    input: {
       borderWidth: 1,
-      borderColor: "gray",
+      borderColor: "#ced4da", // Bootstrap-like input border color
       marginBottom: 10,
-      padding: 8,
+      padding: 10,
+      borderRadius: 5,
+      fontSize: 16,
+   },
+   submitButton: {
+      backgroundColor: "#007bff", // Bootstrap primary button color
+      padding: 10,
+      borderRadius: 5,
+      alignItems: "center",
+      marginTop: 20,
+      marginBottom: 50,
+   },
+   submitButtonText: {
+      color: "#ffffff",
+      fontSize: 16,
    },
 });
 

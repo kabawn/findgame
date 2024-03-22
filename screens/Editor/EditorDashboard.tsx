@@ -43,6 +43,8 @@ const EditorDashboard = ({ navigation }) => {
                />
 
                <Button title="Add Content" onPress={() => navigation.navigate("AddContentForm")} />
+               <Button title="show Balise and contnet" onPress={() => navigation.navigate("BalisesWithContentsScreen")} />
+
             </View>
          </View>
       </ScrollView>

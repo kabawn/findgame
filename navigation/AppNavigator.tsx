@@ -11,6 +11,7 @@ import LocationDetailsScreen from '../screens/Editor/LocationDetailsScreen'; // 
 import AddBaliseScreen from '../screens/Editor/AddBaliseScreen';
 import AddCategoryForm from '../screens/Editor/AddCategoryForm';
 import AddContentForm from '../screens/Editor/AddContentForm';
+import BalisesWithContentsScreen from '../screens/Editor/BalisesWithContentsScreen';
 const Stack = createStackNavigator();
 
 const AppNavigator: React.FC = () => {
@@ -27,6 +28,8 @@ const AppNavigator: React.FC = () => {
             <Stack.Screen name="AddBaliseScreen" component={AddBaliseScreen}  />
             <Stack.Screen name="AddCategoryForm" component={AddCategoryForm} />
             <Stack.Screen name="AddContentForm" component={AddContentForm} />
+            <Stack.Screen name="BalisesWithContentsScreen" component={BalisesWithContentsScreen} />
+
 
 
 
