@@ -13,6 +13,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
+import { propertyKeyToLabel } from "../utils"; // Assuming you have this utility function
 
 const BASE_URL = "http://192.168.1.78:8086";
 
@@ -24,11 +25,14 @@ const AddContentForm = () => {
       body: "",
       properties: {},
       imageUrl: "", // Add this line
+      keywords: [], // Initialize as empty array for input handling
+      searchRadius: "", // Add searchRadius here
    });
    const [categories, setCategories] = useState([]);
    const [balises, setBalises] = useState([]);
    const [userId, setUserId] = useState("");
    const [imageUri, setImageUri] = useState(null);
+   const [rawKeywords, setRawKeywords] = useState("");
 
    useEffect(() => {
       getUserIdAndFetchData();
@@ -60,41 +64,40 @@ const AddContentForm = () => {
 
    // Image upload function
    const uploadImage = async (imageUri) => {
-    let formData = new FormData();
-    formData.append("file", {
-        uri: imageUri,
-        type: "image/jpeg", // Adjust based on actual image type
-        name: "upload.jpg", // The name can be dynamically set if needed
-    });
+      let formData = new FormData();
+      formData.append("file", {
+         uri: imageUri,
+         type: "image/jpeg", // Adjust based on actual image type
+         name: "upload.jpg", // The name can be dynamically set if needed
+      });
 
-    try {
-        const response = await fetch(`${BASE_URL}/api/upload`, {
+      try {
+         const response = await fetch(`${BASE_URL}/api/upload`, {
             method: "POST",
             body: formData,
             headers: {
-                "Content-Type": "multipart/form-data",
+               "Content-Type": "multipart/form-data",
             },
-        });
+         });
 
-        if (!response.ok) throw new Error("Failed to upload image");
+         if (!response.ok) throw new Error("Failed to upload image");
 
-        // Directly use the response URL as it already includes the base URL
-        const imageUrl = await response.text();
+         // Directly use the response URL as it already includes the base URL
+         const imageUrl = await response.text();
 
-        // Update formData with the received image URL
-        setFormData(prevState => ({
+         // Update formData with the received image URL
+         setFormData((prevState) => ({
             ...prevState,
-            imageUrl: imageUrl.trim() // Ensuring no leading/trailing whitespace
-        }));
+            imageUrl: imageUrl.trim(), // Ensuring no leading/trailing whitespace
+         }));
 
-        return imageUrl; // This return might be used or ignored depending on subsequent logic
-    } catch (error) {
-        console.error("Error uploading image:", error);
-        Alert.alert("Error", "Failed to upload image.");
-        return null; // Indicating failure
-    }
-};
-
+         return imageUrl; // This return might be used or ignored depending on subsequent logic
+      } catch (error) {
+         console.error("Error uploading image:", error);
+         Alert.alert("Error", "Failed to upload image.");
+         return null; // Indicating failure
+      }
+   };
 
    const fetchCategories = async () => {
       try {
@@ -137,53 +140,68 @@ const AddContentForm = () => {
       return category ? category.name : "";
    };
 
-  // Submit content function
-const handleSubmit = async () => {
-    if (!formData.title || !formData.body || !formData.categoryId || !formData.baliseId) {
-        Alert.alert("Validation Error", "Please fill in all fields.");
-        return;
-    }
+   // Submit content function
+   const handleSubmit = async () => {
+      if (!formData.title || !formData.body || !formData.categoryId || !formData.baliseId) {
+         Alert.alert("Validation Error", "Please fill in all fields.");
+         return;
+      }
 
-    if (!imageUri) {
-        Alert.alert("Validation Error", "Please pick an image.");
-        return;
-    }
+      if (!imageUri) {
+         Alert.alert("Validation Error", "Please pick an image.");
+         return;
+      }
 
-    // Upload image and get the URL
-    const imageUrl = await uploadImage(imageUri);
-    if (!imageUrl) {
-        Alert.alert("Upload Error", "Failed to upload image.");
-        return;
-    }
+      // Upload image and get the URL
+      const imageUrl = await uploadImage(imageUri);
+      if (!imageUrl) {
+         Alert.alert("Upload Error", "Failed to upload image.");
+         return;
+      }
 
-    // Prepare submission data including the imageUrl
-    const submissionData = {
-        ...formData,
-        userId: userId,
-        imageUrl: imageUrl, // Include the image URL received from the upload function
-    };
+      const keywordsArray = rawKeywords
+         .split(",")
+         .map((kw) => kw.trim())
+         .filter((kw) => kw);
 
-    try {
-        const response = await fetch(`${BASE_URL}/api/contents`, {
+      // Adjust properties to start with a capital letter
+      const adjustedProperties = Object.keys(formData.properties).reduce((acc, key) => {
+         const formattedKey = propertyKeyToLabel(key); // Convert key to a readable format
+         acc[formattedKey] = formData.properties[key];
+         return acc;
+      }, {});
+
+      // Prepare submission data including the imageUrl
+      const submissionData = {
+         ...formData,
+         userId: userId,
+         imageUrl: imageUrl, // Include the image URL received from the upload function
+         keywords: keywordsArray,
+         properties: adjustedProperties,
+         searchRadius: parseFloat(formData.searchRadius), // Make sure it's a number
+      };
+
+      try {
+         const response = await fetch(`${BASE_URL}/api/contents`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
+               "Content-Type": "application/json",
             },
             body: JSON.stringify(submissionData),
-        });
+         });
 
-        if (!response.ok) {
+         if (!response.ok) {
             const errorData = await response.text();
             throw new Error(`Failed to submit content: ${errorData}`);
-        }
+         }
 
-        Alert.alert("Success", "Content added successfully!");
-        // Reset form fields here
-    } catch (error) {
-        console.error("Error submitting content:", error);
-        Alert.alert("Error", "Failed to submit content.");
-    }
-};
+         Alert.alert("Success", "Content added successfully!");
+         // Reset form fields here
+      } catch (error) {
+         console.error("Error submitting content:", error);
+         Alert.alert("Error", "Failed to submit content.");
+      }
+   };
 
    return (
       <ScrollView style={styles.container}>
@@ -214,33 +232,28 @@ const handleSubmit = async () => {
                />
             ))}
          </Picker>
-         {/* Skills Form */}
+         {/* Formulaire de compétences */}
          {getCategoryNameById(formData.categoryId) === "Skills" && (
             <>
-               <Text>Title:</Text>
+               <Text>Titre :</Text>
                <TextInput
-                  placeholder="Enter title"
+                  placeholder="Entrez le titre"
                   value={formData.title}
                   onChangeText={(text) => handleChange("title", text)}
                   style={styles.input}
                />
-               <Text>Body:</Text>
+               <Text>Description :</Text>
                <TextInput
-                  placeholder="Enter body content"
+                  placeholder="Entrez la description du service"
                   value={formData.body}
                   multiline
-                  numberOfLines={4}
+                  numberOfLines={8}
                   onChangeText={(text) => handleChange("body", text)}
-                  style={[styles.input, { textAlignVertical: "top" }]} // Adjust style for multiline input
+                  style={[styles.input, { textAlignVertical: "top" }]}
                />
+
                <TextInput
-                  placeholder="Skill Level"
-                  value={formData.properties.skillLevel || ""}
-                  onChangeText={(text) => handlePropertyChange("skillLevel", text)}
-                  style={styles.input}
-               />
-               <TextInput
-                  placeholder="Years of Experience"
+                  placeholder="Années d'expérience"
                   value={formData.properties.yearsOfExperience || ""}
                   onChangeText={(text) => handlePropertyChange("yearsOfExperience", text)}
                   style={styles.input}
@@ -252,14 +265,39 @@ const handleSubmit = async () => {
                   style={styles.input}
                />
                <TextInput
-                  placeholder="Phone"
+                  placeholder="Téléphone"
                   value={formData.properties.phone || ""}
                   onChangeText={(text) => handlePropertyChange("phone", text)}
                   style={styles.input}
                />
+               <TextInput
+                  placeholder="Langues parlées (séparées par une virgule)"
+                  value={formData.properties.languages || ""}
+                  onChangeText={(text) => handlePropertyChange("languages", text)}
+                  style={styles.input}
+               />
+               <TextInput
+                  placeholder="Disponibilité (jours et heures)"
+                  value={formData.properties.availability || ""}
+                  onChangeText={(text) => handlePropertyChange("availability", text)}
+                  style={styles.input}
+               />
 
-               {/* Image Picker and Preview */}
-               <Button title="Pick Image" onPress={pickImage} />
+               <TextInput
+                  placeholder="Entrez les mots-clés (séparés par une virgule)"
+                  value={rawKeywords}
+                  onChangeText={setRawKeywords} // Update rawKeywords directly
+                  style={styles.input}
+               />
+               <TextInput
+                  placeholder="Search Radius (in kilometers)"
+                  value={formData.searchRadius.toString()} // Convert searchRadius to string for the input
+                  onChangeText={(text) => setFormData({ ...formData, searchRadius: text })}
+                  keyboardType="numeric" // Ensure numeric keyboard for better user experience
+                  style={styles.input}
+               />
+               {/* Sélecteur et aperçu d'image */}
+               <Button title="Choisir une image" onPress={pickImage} />
                {imageUri && (
                   <View style={{ alignItems: "center", marginVertical: 20 }}>
                      <Image source={{ uri: imageUri }} style={{ width: 200, height: 200 }} />
@@ -267,6 +305,7 @@ const handleSubmit = async () => {
                )}
             </>
          )}
+
          {/* Services Form */}
          {getCategoryNameById(formData.categoryId) === "Services" && (
             <>
